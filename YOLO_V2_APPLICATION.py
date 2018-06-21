@@ -19,7 +19,7 @@ sess = K.get_session()
 
 class_names = read_classes("model_data/coco_classes.txt")
 anchors = read_anchors("model_data/yolo_anchors.txt")
-image_shape = (720., 1280.)
+image_shape = (1080., 1440.)
 
 yolo_model = load_model("model_data/yolo.h5")
 yolo_model.summary()
@@ -68,6 +68,7 @@ def predict(sess, image_file):
 
     return out_scores, out_boxes, out_classes
 
-out_scores, out_boxes, out_classes = predict(sess, "0001.jpg")
+
+out_scores, out_boxes, out_classes = predict(sess, "test2.jpg")
 
 plt.show()
