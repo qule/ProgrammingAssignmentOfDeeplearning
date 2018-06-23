@@ -21,18 +21,15 @@ def load_data(y_name='type', dropped=['id', 'uid', 'dates']):
     dataall = dataall.sample(frac=1)
 
     y_all = dataall.pop(y_name)
+    print(y_all.shape)
     x_all = dataall.drop(dropped, axis=1, inplace=False)
+    print(x_all.shape)
 
-    train_x = x_all.iloc[:10000, :]
-    train_y = y_all.iloc[:10000]
+    train_x = x_all.iloc[:200000, :]
+    train_y = y_all.iloc[:200000]
 
-    print(train_x)
-    print(train_y)
-    print(train_y[train_y==1].count())
-    print(train_y[train_y == 0].count())
-
-    test_x = x_all.iloc[10000:20000, :]
-    test_y = y_all.iloc[10000:20000]
+    test_x = x_all.iloc[200000:205000, :]
+    test_y = y_all.iloc[200000:205000]
 
     print(test_y[test_y == 1].count())
     print(test_y[test_y == 0].count())
@@ -91,8 +88,8 @@ def main(argv):
     classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, hidden_units=[5, 5], n_classes=2)
 
     # Train the Model.
-    classifier.train(input_fn=lambda:train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
-    # classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size))
+    # classifier.train(input_fn=lambda:train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
+    classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size))
 
     # Evaluate the model.
     eval_result = classifier.evaluate(input_fn=lambda:eval_input_fn(test_x, test_y, args.batch_size))
