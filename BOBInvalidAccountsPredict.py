@@ -6,18 +6,17 @@ CSV_COLUMN_NAMES = ['id', 'uid', 'gzh', 'xh', 'gz', 'middle_time', 'avg_time', '
 USER_TYPE = ['ALT', 'NEW']
 
 
-
-def load_data(y_name='type', dropped=['id', 'uid', 'dates']):
+def load_data(y_name='type', dropped=['id', 'uid', 'dates', 'middle_time', 'avg_time', 'android', 'nonwifi']):
     data_dir = "model_data/bob/"
 
     """Returns the iris dataset as (train_x, train_y), (test_x, test_y)."""
     csv_path = data_dir + "wl_model_data1.csv"
     dataall = pd.read_csv(csv_path, names=CSV_COLUMN_NAMES, header=0)
 
-    dataallNew = dataall[dataall['type']==1].iloc[:100000, :]
-    dataall = dataall[dataall['type']==0]
-
+    dataallNew = dataall[dataall['type'] == 1].iloc[:100000, :]
+    dataall = dataall[dataall['type'] == 0]
     dataall = pd.concat([dataall, dataallNew])
+
     dataall = dataall.sample(frac=1)
 
     y_all = dataall.pop(y_name)
@@ -25,16 +24,18 @@ def load_data(y_name='type', dropped=['id', 'uid', 'dates']):
     x_all = dataall.drop(dropped, axis=1, inplace=False)
     print(x_all.shape)
 
-    train_x = x_all.iloc[:200000, :]
-    train_y = y_all.iloc[:200000]
+    train_x = x_all.iloc[:5000, :]
+    train_y = y_all.iloc[:5000]
 
-    test_x = x_all.iloc[200000:205000, :]
-    test_y = y_all.iloc[200000:205000]
-
+    test_x = x_all.iloc[5000:105000, :]
+    test_y = y_all.iloc[5000:105000]
     print(test_y[test_y == 1].count())
     print(test_y[test_y == 0].count())
 
+    print(test_x)
+
     return (train_x, train_y), (test_x, test_y)
+
 
 def train_input_fn(features, labels, batch_size):
     """An input function for training"""
@@ -46,9 +47,10 @@ def train_input_fn(features, labels, batch_size):
     # Return the dataset.
     return dataset
 
+
 def eval_input_fn(features, labels, batch_size):
     """An input function for evaluation or prediction"""
-    features=dict(features)
+    features = dict(features)
     if labels is None:
         # No labels, use only features.
         inputs = features
@@ -66,11 +68,10 @@ def eval_input_fn(features, labels, batch_size):
     return dataset
 
 
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
-parser.add_argument('--train_steps', default=10000, type=int, help='number of training steps')
+parser.add_argument('--train_steps', default=5000, type=int, help='number of training steps')
+
 
 def main(argv):
     args = parser.parse_args(argv[1:])
@@ -83,28 +84,29 @@ def main(argv):
     for key in train_x.keys():
         my_feature_columns.append(tf.feature_column.numeric_column(key=key))
 
-
     # Build 2 hidden layer DNN with 10, 10 units respectively.
-    classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, hidden_units=[5, 5], n_classes=2)
+    classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, hidden_units=[10, 10], n_classes=2,
+                                            activation_fn=tf.nn.relu, model_dir="/tmp/bobInvalidAccPredict/",
+                                            optimizer="Adam")
 
     # Train the Model.
-    # classifier.train(input_fn=lambda:train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
-    classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size))
+    classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
+    # classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size))
 
     # Evaluate the model.
-    eval_result = classifier.evaluate(input_fn=lambda:eval_input_fn(test_x, test_y, args.batch_size))
+    eval_result = classifier.evaluate(input_fn=lambda: eval_input_fn(test_x, test_y, args.batch_size))
 
     print(eval_result)
     print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
 
     predictions = classifier.predict(input_fn=lambda: eval_input_fn(test_x, labels=None, batch_size=args.batch_size))
 
-    res = {"0-0":0, "0-1":0, "1-0":0, "1-1":0}
+    res = {"0-0": 0, "0-1": 0, "1-0": 0, "1-1": 0}
     for pred_dict, expect in zip(predictions, test_y):
-        res[str(pred_dict['class_ids'][0]) + "-" +str(expect)] += 1
+        res[str(pred_dict['class_ids'][0]) + "-" + str(expect)] += 1
 
     print(res)
-    #
+
     # # Generate predictions from the model
     # expected = ['ALT', 'NEW', 'ALT']
     # predict_x = {
