@@ -3,10 +3,10 @@ import tensorflow as tf
 import argparse
 
 CSV_COLUMN_NAMES = ['id', 'uid', 'gzh', 'xh', 'gz', 'middle_time', 'avg_time', 'ios', 'android', 'wifi', 'nonwifi', 'game0', 'game1', 'game2', 'game3', 'game4', 'type', 'dates']
-USER_TYPE = ['ALT', 'NEW']
+USER_TYPE = ['NEW', 'ALT']
 
 
-def load_data(y_name='type', dropped=['id', 'uid', 'dates', 'middle_time', 'avg_time', 'android', 'nonwifi']):
+def load_data(y_name='type', dropped=['id', 'uid', 'gzh', 'xh', 'gz', 'dates', 'ios', 'android', 'wifi', 'nonwifi', 'game0', 'game1', 'game2', 'game3', 'game4']):
     data_dir = "model_data/bob/"
 
     """Returns the iris dataset as (train_x, train_y), (test_x, test_y)."""
@@ -70,7 +70,7 @@ def eval_input_fn(features, labels, batch_size):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
-parser.add_argument('--train_steps', default=5000, type=int, help='number of training steps')
+parser.add_argument('--train_steps', default=2000, type=int, help='number of training steps')
 
 
 def main(argv):
@@ -90,8 +90,7 @@ def main(argv):
                                             optimizer="Adam")
 
     # Train the Model.
-    classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
-    # classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size))
+    # classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
 
     # Evaluate the model.
     eval_result = classifier.evaluate(input_fn=lambda: eval_input_fn(test_x, test_y, args.batch_size))
@@ -102,18 +101,32 @@ def main(argv):
     predictions = classifier.predict(input_fn=lambda: eval_input_fn(test_x, labels=None, batch_size=args.batch_size))
 
     res = {"0-0": 0, "0-1": 0, "1-0": 0, "1-1": 0}
-    for pred_dict, expect in zip(predictions, test_y):
+    for pred_dict, expect, index in zip(predictions, test_y, range(0, 1000)):
+        # 预测是小号，但是实际不是
+        if pred_dict['class_ids'][0] == 0 and expect == 0 :
+            print(test_x.iloc[index:index+1, :])
+        # 预测不是小号，但是实际是
+        # if pred_dict['class_ids'][0] == 1 and expect == 1 :
+        #     print(test_x.iloc[index:index+1, :])
+
         res[str(pred_dict['class_ids'][0]) + "-" + str(expect)] += 1
 
     print(res)
 
+
     # # Generate predictions from the model
-    # expected = ['ALT', 'NEW', 'ALT']
+    # expected = ['NEW', 'NEW', 'NEW', 'NEW']
     # predict_x = {
-    #     'gzh': [0, 1, 0],
-    #     'xh': [0, 0, 0],
-    #     'gz': [0, 0, 0],
-    #     'deposit': [0, 0, 0],
+    #     'gzh': [0, 0, 1, 0],
+    #     'xh': [0, 0, 0, 0],
+    #     'gz': [0, 0, 0, 0],
+    #     'ios': [0, 0, 0, 0],
+    #     'wifi': [0, 0, 1, 1],
+    #     'game0': [0, 0, 11, 2],
+    #     'game1': [0, 0, 0, 0],
+    #     'game2': [0, 0, 0, 0],
+    #     'game3': [0, 0, 0, 0],
+    #     'game4': [0, 0, 0, 0]
     # }
     #
     # predictions = classifier.predict(input_fn=lambda:eval_input_fn(predict_x, labels=None, batch_size=args.batch_size))
