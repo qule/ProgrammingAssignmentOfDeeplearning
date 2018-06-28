@@ -2,20 +2,23 @@ import pandas as pd
 import tensorflow as tf
 import argparse
 
-CSV_COLUMN_NAMES = ['id', 'uid', 'gzh', 'xh', 'gz', 'middle_time', 'avg_time', 'ios', 'android', 'wifi', 'nonwifi', 'game0', 'game1', 'game2', 'game3', 'game4', 'type', 'dates']
+# CSV_COLUMN_NAMES = ['id', 'uid', 'gzh', 'xh', 'gz', 'middle_time', 'avg_time', 'ios', 'android', 'wifi', 'nonwifi', 'game0', 'game1', 'game2', 'game3', 'game4', 'type', 'dates']
+CSV_COLUMN_NAMES = ['id', 'uid', 'gzh', 'xh', 'gz', 'deposit', 'time0', 'time1', 'time2', 'time3', 'emoney', 'ios',
+                    'wifi', 'game0', 'game1', 'game2', 'game3', 'game4', 'pf', 'type']
 USER_TYPE = ['NEW', 'ALT']
 
 
-def load_data(y_name='type', dropped=['id', 'uid', 'gzh', 'xh', 'gz', 'dates', 'ios', 'android', 'wifi', 'nonwifi', 'game0', 'game1', 'game2', 'game3', 'game4']):
+# def load_data(y_name='type', dropped=['id', 'uid', 'gzh', 'xh', 'gz', 'dates', 'ios', 'android', 'wifi', 'nonwifi', 'game0', 'game1', 'game2', 'game3', 'game4']):
+def load_data(y_name='type', dropped=['id', 'uid']):
     data_dir = "model_data/bob/"
 
     """Returns the iris dataset as (train_x, train_y), (test_x, test_y)."""
-    csv_path = data_dir + "wl_model_data1.csv"
+    csv_path = data_dir + "wl_model_data.csv"
     dataall = pd.read_csv(csv_path, names=CSV_COLUMN_NAMES, header=0)
 
-    dataallNew = dataall[dataall['type'] == 1].iloc[:100000, :]
-    dataall = dataall[dataall['type'] == 0]
-    dataall = pd.concat([dataall, dataallNew])
+    # dataallNew = dataall[dataall['type'] == 1].iloc[:100000, :]
+    # dataall = dataall[dataall['type'] == 0]
+    # dataall = pd.concat([dataall, dataallNew])
 
     dataall = dataall.sample(frac=1)
 
@@ -24,11 +27,11 @@ def load_data(y_name='type', dropped=['id', 'uid', 'gzh', 'xh', 'gz', 'dates', '
     x_all = dataall.drop(dropped, axis=1, inplace=False)
     print(x_all.shape)
 
-    train_x = x_all.iloc[:5000, :]
-    train_y = y_all.iloc[:5000]
+    train_x = x_all.iloc[:130000, :]
+    train_y = y_all.iloc[:130000]
 
-    test_x = x_all.iloc[5000:105000, :]
-    test_y = y_all.iloc[5000:105000]
+    test_x = x_all.iloc[130000:160000, :]
+    test_y = y_all.iloc[130000:160000]
     print(test_y[test_y == 1].count())
     print(test_y[test_y == 0].count())
 
@@ -91,6 +94,7 @@ def main(argv):
 
     # Train the Model.
     # classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
+    classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size))
 
     # Evaluate the model.
     eval_result = classifier.evaluate(input_fn=lambda: eval_input_fn(test_x, test_y, args.batch_size))
@@ -101,10 +105,10 @@ def main(argv):
     predictions = classifier.predict(input_fn=lambda: eval_input_fn(test_x, labels=None, batch_size=args.batch_size))
 
     res = {"0-0": 0, "0-1": 0, "1-0": 0, "1-1": 0}
-    for pred_dict, expect, index in zip(predictions, test_y, range(0, 1000)):
+    for pred_dict, expect, index in zip(predictions, test_y, range(0, 10000)):
         # 预测是小号，但是实际不是
-        if pred_dict['class_ids'][0] == 0 and expect == 0 :
-            print(test_x.iloc[index:index+1, :])
+        # if pred_dict['class_ids'][0] == 0 and expect == 0 :
+            # print(test_x.iloc[index:index+1, :])
         # 预测不是小号，但是实际是
         # if pred_dict['class_ids'][0] == 1 and expect == 1 :
         #     print(test_x.iloc[index:index+1, :])
