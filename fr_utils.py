@@ -190,8 +190,8 @@ def load_dataset():
 
 def img_to_encoding(image_path, model):
     img1 = cv2.imread(image_path, 1)
-    img = img1[...,::-1]
-    img = np.around(np.transpose(img, (2,0,1))/255.0, decimals=12)
+    img = img1[..., ::-1]
+    img = np.around(np.transpose(img, (2, 0, 1))/255.0, decimals=12)
     x_train = np.array([img])
     embedding = model.predict_on_batch(x_train)
     return embedding
