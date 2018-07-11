@@ -73,7 +73,7 @@ def eval_input_fn(features, labels, batch_size):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
-parser.add_argument('--train_steps', default=2000, type=int, help='number of training steps')
+parser.add_argument('--train_steps', default=1000, type=int, help='number of training steps')
 
 
 def main(argv):
@@ -88,13 +88,24 @@ def main(argv):
         my_feature_columns.append(tf.feature_column.numeric_column(key=key))
 
     # Build 2 hidden layer DNN with 10, 10 units respectively.
-    classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns, hidden_units=[10, 10], n_classes=2,
-                                            activation_fn=tf.nn.relu, model_dir="/tmp/bobInvalidAccPredict/",
-                                            optimizer="Adam")
+    classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns,
+                                            hidden_units=[100, 100, 100, 100, 100],
+                                            n_classes=2,
+                                            activation_fn=tf.nn.relu,
+                                            model_dir="/tmp/bobInvalidAccPredict/",
+                                            optimizer=tf.train.ProximalAdagradOptimizer(learning_rate=0.001, l2_regularization_strength=0.0))
 
     # Train the Model.
-    # classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
-    classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size))
+    classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size), steps=args.train_steps)
+    # classifier.train(input_fn=lambda: train_input_fn(train_x, train_y, args.batch_size))
+
+
+    # Evaluate the model.
+    eval_result = classifier.evaluate(input_fn=lambda: eval_input_fn(train_x, train_y, args.batch_size))
+
+    print(eval_result)
+    print('\nTrain set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+
 
     # Evaluate the model.
     eval_result = classifier.evaluate(input_fn=lambda: eval_input_fn(test_x, test_y, args.batch_size))
