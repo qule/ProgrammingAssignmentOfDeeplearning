@@ -73,7 +73,7 @@ def eval_input_fn(features, labels, batch_size):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=100, type=int, help='batch size')
-parser.add_argument('--train_steps', default=1000, type=int, help='number of training steps')
+parser.add_argument('--train_steps', default=100000, type=int, help='number of training steps')
 
 
 def main(argv):
@@ -89,7 +89,7 @@ def main(argv):
 
     # Build 2 hidden layer DNN with 10, 10 units respectively.
     classifier = tf.estimator.DNNClassifier(feature_columns=my_feature_columns,
-                                            hidden_units=[100, 100, 100, 100, 100],
+                                            hidden_units=[500, 500],
                                             n_classes=2,
                                             activation_fn=tf.nn.relu,
                                             model_dir="/tmp/bobInvalidAccPredict/",
