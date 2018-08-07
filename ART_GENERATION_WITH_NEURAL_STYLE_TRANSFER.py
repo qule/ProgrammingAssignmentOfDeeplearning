@@ -74,19 +74,20 @@ def compute_layer_style_cost(a_S, a_G):
 
     ### START CODE HERE ###
     # Retrieve dimensions from a_G (≈1 line)
-    m, n_H, n_W, n_C = a_G.get_shape()
+    m, n_H, n_W, n_C = a_G.get_shape().as_list()
 
     # Reshape the images to have them of shape (n_H*n_W, n_C) (≈2 lines)
-    a_S = tf.transpose(tf.reshape(a_S, shape=(n_H*n_W, n_C)))
-    a_G = tf.transpose(tf.reshape(a_G, shape=(n_H*n_W, n_C)))
+    a_S = tf.reshape(a_S, shape=(n_H*n_W, n_C))
+    a_G = tf.reshape(a_G, shape=(n_H*n_W, n_C))
 
     # Computing gram_matrices for both images S and G (≈2 lines)
     GS = gram_matrix(a_S)
     GG = gram_matrix(a_G)
 
+    print(GS.shape)
+
     # Computing the loss (≈1 line)
-    J_style_layer = tf.reduce_sum(tf.square(tf.subtract(GS, GG)))  #/(4*(n_C*n_C)*(n_W*n_H)*(n_W*n_H))
-    print(J_style_layer)
+    J_style_layer = tf.reduce_sum(tf.square(tf.subtract(GS, GG))) / (4)
 
     ### END CODE HERE ###
 
@@ -165,11 +166,14 @@ def total_cost(J_content, J_style, alpha=10, beta=40):
 
 
 
+
 # Reset the graph
 tf.reset_default_graph()
 
 # Start interactive session
 sess = tf.InteractiveSession()
+
+
 
 content_image = scipy.misc.imread("images/louvre_small.jpg")
 content_image = reshape_and_normalize_image(content_image)
@@ -179,6 +183,9 @@ style_image = reshape_and_normalize_image(style_image)
 
 generated_image = generate_noise_image(content_image)
 imshow(generated_image[0])
+
+plt.show()
+
 
 model = load_vgg_model("pretrained-model/imagenet-vgg-verydeep-19.mat")
 
@@ -198,7 +205,6 @@ a_G = out
 
 # Compute the content cost
 J_content = compute_content_cost(a_C, a_G)
-
 
 sess.run(model['input'].assign(style_image))
 
